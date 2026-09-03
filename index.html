@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FocusFlow - Task Manager</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Lucide Icons CDN -->
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+    <!-- Supabase JS CDN -->
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <!-- Flatpickr CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <!-- CSS -->
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- HEADER -->
+        <header class="app-header">
+            <div class="header-brand">
+                <div class="brand-logo">
+                    <i data-lucide="check-square"></i>
+                </div>
+                <div>
+                    <h1 class="brand-title">Admin LioPuz.SCH</h1>
+                    <p class="brand-subtitle">LioPuz School</p>
+                </div>
+            </div>
+            <div class="header-actions">
+                <button id="theme-toggle" class="btn btn-icon" aria-label="Ubah Tema" title="Ubah Tema">
+                    <i data-lucide="moon" id="theme-icon-moon"></i>
+                    <i data-lucide="sun" id="theme-icon-sun" class="hidden"></i>
+                </button>
+            </div>
+        </header>
+
+        <!-- MAIN CONTENT -->
+        <main class="app-main">
+            <!-- HERO SECTION -->
+            <section class="hero-section">
+                <h2>INPUT LIST TUGAS HARIAN ANDA</h2>
+                <p>Kelola Semua Tugas Pekerjaan Anda, dan User Secara Terstruktur.</p>
+            </section>
+
+            <!-- DASHBOARD STATS -->
+            <section class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon icon-blue">
+                        <i data-lucide="list-todo"></i>
+                    </div>
+                    <div class="stat-info">
+                        <span class="stat-label">Total Tugas</span>
+                        <span class="stat-value" id="stat-total">0</span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon icon-amber">
+                        <i data-lucide="clock"></i>
+                    </div>
+                    <div class="stat-info">
+                        <span class="stat-label">Aktif</span>
+                        <span class="stat-value" id="stat-active">0</span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon icon-green">
+                        <i data-lucide="check-circle-2"></i>
+                    </div>
+                    <div class="stat-info">
+                        <span class="stat-label">Selesai</span>
+                        <span class="stat-value" id="stat-completed">0</span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon icon-red">
+                        <i data-lucide="flame"></i>
+                    </div>
+                    <div class="stat-info">
+                        <span class="stat-label">Mendekati Deadline</span>
+                        <span class="stat-value" id="stat-urgent">0</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- CONTROLS & FILTERS -->
+            <section class="controls-section">
+                <div class="search-box">
+                    <i data-lucide="search" class="search-icon"></i>
+                    <input type="text" id="search-input" placeholder="Cari berdasarkan judul atau deskripsi...">
+                </div>
+                <div class="filter-bar">
+                    <div class="filter-chips">
+                        <button class="filter-chip active" data-filter="all">Semua</button>
+                        <button class="filter-chip" data-filter="individual">Individu</button>
+                        <button class="filter-chip" data-filter="group">Kelompok</button>
+                        <button class="filter-chip" data-filter="active">Aktif</button>
+                        <button class="filter-chip" data-filter="completed">Selesai</button>
+                    </div>
+                    <button id="btn-add-task" class="btn btn-primary">
+                        <i data-lucide="plus"></i>
+                        <span>Tambah Tugas</span>
+                    </button>
+                </div>
+            </section>
+
+            <!-- TASK LIST CONTAINER -->
+            <section class="tasks-section">
+                <div id="task-list" class="task-grid"></div>
+            </section>
+        </main>
+    </div>
+
+    <!-- MODAL FORM (ADD / EDIT) -->
+    <div id="task-modal" class="modal-overlay hidden">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3 id="modal-title">Tambah Tugas Baru</h3>
+                <button id="btn-close-modal" class="btn btn-icon" aria-label="Tutup Modal">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+            <form id="task-form" class="modal-body" novalidate>
+                <div class="form-group">
+                    <label for="task-title-input">Nama Tugas <span class="required">*</span></label>
+                    <input type="text" id="task-title-input" placeholder="Masukkan judul tugas..." required>
+                    <span id="error-title" class="error-msg"></span>
+                </div>
+                
+                <!-- CUSTOM DROPDOWN MATA PELAJARAN -->
+                <div class="form-group">
+                    <label for="select-subject-trigger">Mata Pelajaran <span class="required">*</span></label>
+                    <select id="task-subject-input" class="hidden-native-select" required tabindex="-1">
+                        <option value="" disabled selected>-- Pilih Mata Pelajaran --</option>
+                        <option value="Indonesia">Indonesia</option>
+                        <option value="Sunda">Sunda</option>
+                        <option value="English">English</option>
+                        <option value="Basis Data">Basis Data</option>
+                        <option value="PBTGM">PBTGM</option>
+                        <option value="P-WEB">P-WEB</option>
+                        <option value="PPB">PPB</option>
+                        <option value="PABP">PABP</option>
+                        <option value="PKK">PKK</option>
+                        <option value="PJOK">PJOK</option>
+                        <option value="TKJ">TKJ</option>
+                        <option value="Sejarah">Sejarah</option>
+                        <option value="PP">PP</option>
+                        <option value="Matematika">Matematika</option>
+                    </select>
+                    <div class="custom-select" id="custom-select-subject">
+                        <button type="button" class="custom-select-trigger" id="select-subject-trigger" aria-haspopup="listbox" aria-expanded="false">
+                            <span class="custom-select-value">-- Pilih Mata Pelajaran --</span>
+                            <i data-lucide="chevron-down" class="select-chevron"></i>
+                        </button>
+                        <div class="custom-select-menu" role="listbox">
+                            <div class="custom-option selected placeholder" data-value="">-- Pilih Mata Pelajaran --</div>
+                            <div class="custom-option" data-value="Indonesia">Indonesia</div>
+                            <div class="custom-option" data-value="Sunda">Sunda</div>
+                            <div class="custom-option" data-value="English">English</div>
+                            <div class="custom-option" data-value="Basis Data">Basis Data</div>
+                            <div class="custom-option" data-value="PBTGM">PBTGM</div>
+                            <div class="custom-option" data-value="P-WEB">P-WEB</div>
+                            <div class="custom-option" data-value="PPB">PPB</div>
+                            <div class="custom-option" data-value="PABP">PABP</div>
+                            <div class="custom-option" data-value="PKK">PKK</div>
+                            <div class="custom-option" data-value="PJOK">PJOK</div>
+                            <div class="custom-option" data-value="TKJ">TKJ</div>
+                            <div class="custom-option" data-value="Sejarah">Sejarah</div>
+                            <div class="custom-option" data-value="PP">PP</div>
+                            <div class="custom-option" data-value="Matematika">Matematika</div>
+                        </div>
+                    </div>
+                    <span id="error-subject" class="error-msg"></span>
+                </div>
+                
+                <div class="form-row">
+                    <!-- CUSTOM DROPDOWN JENIS TUGAS -->
+                    <div class="form-group">
+                        <label for="select-type-trigger">Jenis Tugas <span class="required">*</span></label>
+                        <select id="task-type-input" class="hidden-native-select" required tabindex="-1">
+                            <option value="individual" selected>Individu</option>
+                            <option value="group">Kelompok</option>
+                        </select>
+                        <div class="custom-select" id="custom-select-type">
+                            <button type="button" class="custom-select-trigger" id="select-type-trigger" aria-haspopup="listbox" aria-expanded="false">
+                                <span class="custom-select-value">Individu</span>
+                                <i data-lucide="chevron-down" class="select-chevron"></i>
+                            </button>
+                            <div class="custom-select-menu" role="listbox">
+                                <div class="custom-option selected" data-value="individual">Individu</div>
+                                <div class="custom-option" data-value="group">Kelompok</div>
+                            </div>
+                        </div>
+                        <span id="error-type" class="error-msg"></span>
+                    </div>
+
+                    <!-- INPUT DEADLINE DENGAN FLATPICKR -->
+                    <div class="form-group">
+                        <label for="task-deadline-input">Batas Waktu (Deadline) <span class="required">*</span></label>
+                        <div class="date-input-wrapper">
+                            <input type="text" id="task-deadline-input" placeholder="Pilih batas waktu..." required readonly>
+                        </div>
+                        <span id="error-deadline" class="error-msg"></span>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="task-desc-input">Deskripsi (Opsional)</label>
+                    <textarea id="task-desc-input" rows="3" placeholder="Tambahkan catatan atau detail tugas..."></textarea>
+                    <span id="error-desc" class="error-msg"></span>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" id="btn-cancel-modal" class="btn btn-secondary">Batal</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i data-lucide="save"></i>
+                        <span id="submit-btn-text">Simpan Tugas</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- DELETE CONFIRMATION MODAL -->
+    <div id="delete-modal" class="modal-overlay hidden">
+        <div class="modal-card modal-danger">
+            <div class="modal-header">
+                <h3>Hapus Tugas</h3>
+                <button id="btn-close-delete-modal" class="btn btn-icon" aria-label="Tutup Modal">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p>Apakah Anda yakin ingin menghapus tugas ini? Tindakan ini tidak dapat dibatalkan.</p>
+                <div class="delete-preview-box">
+                    <strong id="delete-task-preview"></strong>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="btn-cancel-delete" class="btn btn-secondary">Batal</button>
+                <button id="btn-confirm-delete" class="btn btn-danger">
+                    <i data-lucide="trash-2"></i>
+                    <span>Hapus</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- TOAST NOTIFICATION -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <!-- Flatpickr JS & Locale Indonesia -->
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/id.js"></script>
+    <!-- JS -->
+    <script src="js/app.js" defer></script>
+</body>
+</html>
